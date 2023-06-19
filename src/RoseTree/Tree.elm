@@ -42,8 +42,8 @@ import Array exposing (Array)
 import Array.Extra as Array
 
 
-{-| Represents a tree here each node contains a value of type `a`
-and an array of child nodes.
+{-| Represents a tree where each node contains a value of type `a`
+and an array of zero or more children.
 
     tree : Tree String
     tree =
