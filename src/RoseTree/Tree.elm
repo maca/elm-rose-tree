@@ -3,7 +3,7 @@ module RoseTree.Tree exposing
     , branch, leaf
     , get, updateAt, replaceAt, removeAt, insertBefore, insertAfter
     , value, setValue, updateValue, getValueAt, updateValueAt
-    , children, unshift, push
+    , children, unshift, push, pushChildFor, unshiftChildFor
     , map, mapValues, filterMap, foldl, foldr, findl, findr, any, all
     )
 
@@ -29,7 +29,7 @@ module RoseTree.Tree exposing
 
 # Children
 
-@docs children, unshift, push
+@docs children, unshift, push, pushChildFor, unshiftChildFor
 
 
 # Folds
@@ -138,6 +138,17 @@ children (Tree _ ns) =
     Array.toList ns
 
 
+{-| Adds a child node to the end of the children list of a parent node.
+
+    push (leaf "b") (branch "root" [ leaf "a" ])
+        == branch "root" [ leaf "a", leaf "b" ]
+
+-}
+push : Tree a -> Tree a -> Tree a
+push n (Tree a ns) =
+    Tree a (Array.push n ns)
+
+
 {-| Adds a child node to the beginning of the children list of a parent node.
 
     unshift (leaf "b") (branch "root" [ leaf "a" ])
@@ -149,15 +160,28 @@ unshift n (Tree a ns) =
     Tree a (Array.append (Array.fromList [ n ]) ns)
 
 
-{-| Adds a child node to the end of the children list of a parent node.
+{-| Adds a child node to the end of the children list of a parent node at
+a path.
 
-    push (leaf "b") (branch "root" [ leaf "a" ])
-        == branch "root" [ leaf "a", leaf "b" ]
+    pushChildFor [ 0 ] (leaf "x") (branch "root" [ branch "a" [ leaf "b" ] ])
+        == branch "root" [ branch "a" [ leaf "b", leaf "x" ] ]
 
 -}
-push : Tree a -> Tree a -> Tree a
-push n (Tree a ns) =
-    Tree a (Array.push n ns)
+pushChildFor : List Int -> Tree a -> Tree a -> Tree a
+pushChildFor path child =
+    updateAt path (push child)
+
+
+{-| Adds a child node to the beginning of the children list of a parent node at
+a path.
+
+    unshiftChildFor [ 0 ] (leaf "x") (branch "root" [ branch "a" [ leaf "b" ] ])
+        == branch "root" [ branch "a" [ leaf "x", leaf "b" ] ]
+
+-}
+unshiftChildFor : List Int -> Tree a -> Tree a -> Tree a
+unshiftChildFor path child =
+    updateAt path (unshift child)
 
 
 {-| Retrieves a child node at the specified path.
