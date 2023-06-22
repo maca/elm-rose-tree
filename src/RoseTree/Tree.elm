@@ -5,6 +5,7 @@ module RoseTree.Tree exposing
     , value, setValue, updateValue, getValueAt, updateValueAt
     , children, unshift, push, pushChildFor, unshiftChildFor
     , map, mapValues, filterMap, foldl, foldr, findl, findr, any, all
+    , foldWithPath
     )
 
 {-|
@@ -35,11 +36,13 @@ module RoseTree.Tree exposing
 # Folds
 
 @docs map, mapValues, filterMap, foldl, foldr, findl, findr, any, all
+@docs foldWithPath
 
 -}
 
 import Array exposing (Array)
 import Array.Extra as Array
+import RoseTree.Path as Path
 
 
 {-| Represents a tree where each node contains a value of type `a`
@@ -316,6 +319,37 @@ filterMap f (Tree a ns) =
 foldl : (Tree a -> b -> b) -> b -> Tree a -> b
 foldl f acc (Tree a ns) =
     Array.foldl (\n acc_ -> foldl f acc_ n) (f (Tree a ns) acc) ns
+
+
+{-| Reduces a tree from the deepest leftmost, passing the path as the first
+argument to the reducer, and omitting the root.
+
+Folding to a list will make for a weird order ;)
+
+    foldWithPath (\p n acc -> ( value n, p ) :: acc) [] (branch "a" [ leaf "b", leaf "c" ])
+        == [ ( "c", [ 1 ] ), ( "b", [ 0 ] ) ]
+
+-}
+foldWithPath : (List Int -> Tree a -> b -> b) -> b -> Tree a -> b
+foldWithPath f acc node =
+    foldWithPathHelp f [] acc node
+
+
+foldWithPathHelp : (List Int -> Tree a -> b -> b) -> List Int -> b -> Tree a -> b
+foldWithPathHelp f path acc (Tree a ns) =
+    ns
+        |> Array.foldl
+            (\n ( path_, acc_ ) ->
+                ( Path.next path_, foldWithPathHelp f path_ acc_ n )
+            )
+            ( path ++ [ 0 ]
+            , if List.isEmpty path then
+                acc
+
+              else
+                f path (Tree a ns) acc
+            )
+        |> Tuple.second
 
 
 {-| Reduces a tree from the deepest leftmost.

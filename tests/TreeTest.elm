@@ -271,6 +271,39 @@ suite =
                         |> Tree.foldl (Tree.value >> (+)) 0
                         |> Expect.equal expected
             ]
+        , describe "fold with path"
+            [ fuzz (searchFuzzer 5 5) "applies function to all nodes" <|
+                \{ breadth, depth } ->
+                    let
+                        tree =
+                            makeTree breadth depth
+
+                        folded =
+                            tree
+                                |> Tree.foldWithPath
+                                    (\p n acc -> ( Tree.value n, p ) :: acc)
+                                    []
+
+                        matches =
+                            folded
+                                |> List.map
+                                    (\( val, path ) ->
+                                        Tree.getValueAt path tree == Just val
+                                    )
+                    in
+                    ()
+                        |> Expect.all
+                            [ \_ ->
+                                List.foldl (Tuple.first >> (+)) 0 folded
+                                    |> Expect.equal
+                                        (Tree.foldl (Tree.value >> (+))
+                                            0
+                                            tree
+                                        )
+                            , \_ ->
+                                List.all identity matches |> Expect.equal True
+                            ]
+            ]
         , describe "any"
             [ fuzz (searchFuzzer 3 3) "there is one" <|
                 \({ breadth, depth } as search) ->
