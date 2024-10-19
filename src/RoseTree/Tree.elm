@@ -126,8 +126,8 @@ getValueAt path tree =
 
 -}
 updateValueAt : List Int -> (a -> a) -> Tree a -> Tree a
-updateValueAt path f =
-    updateAt path (updateValue f)
+updateValueAt path f tree =
+    updateAt path (updateValue f) tree
 
 
 {-| Retrieves the immediate children of a tree node.
@@ -194,7 +194,7 @@ unshiftChildFor path child =
 
 -}
 get : List Int -> Tree a -> Maybe (Tree a)
-get path (Tree _ ns) =
+get path ((Tree _ ns) as tree) =
     case path of
         idx :: [] ->
             Array.get idx ns
@@ -203,7 +203,7 @@ get path (Tree _ ns) =
             Maybe.andThen (get rest) (Array.get idx ns)
 
         [] ->
-            Nothing
+            Just tree
 
 
 {-| Updates a child node at the specified path using a function if the node
@@ -214,8 +214,13 @@ exists.
 
 -}
 updateAt : List Int -> (Tree a -> Tree a) -> Tree a -> Tree a
-updateAt path f node =
-    updateAtHelp path (\idx -> Array.update idx f) node
+updateAt path f tree =
+    case path of
+        [] ->
+            f tree
+
+        _ ->
+            updateAtHelp path (\idx -> Array.update idx f) tree
 
 
 {-| Replaces a child node at the specified path with a new node if the node

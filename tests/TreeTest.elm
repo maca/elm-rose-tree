@@ -53,8 +53,30 @@ suite =
                         |> Tree.value
                         |> Expect.equal 4
             ]
+        , describe "getValueAt"
+            [ fuzz (searchFuzzer 5 5) "gets root with empty path" <|
+                \{ breadth, depth } ->
+                    makeTree breadth depth
+                        |> Tree.getValueAt []
+                        |> Expect.equal (Just 0)
+            , fuzz (searchFuzzer 5 5) "exists at path" <|
+                \{ breadth, depth, path } ->
+                    makeTree breadth depth
+                        |> Tree.getValueAt path
+                        |> Expect.notEqual Nothing
+            , fuzz (searchFuzzer 5 5) "doesn't exist at search too deep" <|
+                \{ breadth, depth } ->
+                    makeTree breadth depth
+                        |> Tree.getValueAt (List.repeat (depth + 1) 0)
+                        |> Expect.equal Nothing
+            , fuzz (searchFuzzer 5 5) "doesn't exist at search too wide" <|
+                \{ breadth, depth } ->
+                    makeTree breadth depth
+                        |> Tree.getValueAt (List.repeat depth (breadth + 1))
+                        |> Expect.equal Nothing
+            ]
         , describe "get"
-            [ test "value at path" <|
+            [ test "tree at path" <|
                 \_ ->
                     makeTree 2 3
                         |> Expect.all
@@ -67,6 +89,11 @@ suite =
                             , Tree.get [ 0, 1, 1 ]
                                 >> Expect.equal (Just (Tree.leaf 10))
                             ]
+            , fuzz (searchFuzzer 5 5) "gets root with empty path" <|
+                \{ breadth, depth } ->
+                    makeTree breadth depth
+                        |> Tree.get []
+                        |> Expect.equal (Just (makeTree breadth depth))
             , fuzz (searchFuzzer 5 5) "exists at path" <|
                 \{ breadth, depth, path } ->
                     makeTree breadth depth
@@ -83,8 +110,15 @@ suite =
                         |> Tree.get (List.repeat depth (breadth + 1))
                         |> Expect.equal Nothing
             ]
-        , describe "update"
-            [ fuzz (searchFuzzer 5 5) "at path" <|
+        , describe "update at"
+            [ fuzz (searchFuzzer 5 5) "at root" <|
+                \{ breadth, depth } ->
+                    makeTree breadth depth
+                        |> Tree.updateAt [] (Tree.setValue -1)
+                        |> Tree.get []
+                        |> Maybe.map Tree.value
+                        |> Expect.equal (Just -1)
+            , fuzz (searchFuzzer 5 5) "at path" <|
                 \{ breadth, depth, path } ->
                     makeTree breadth depth
                         |> Tree.updateAt path (Tree.setValue -1)
@@ -99,7 +133,14 @@ suite =
                         |> Expect.equal (makeTree breadth depth)
             ]
         , describe "update value at"
-            [ fuzz (searchFuzzer 5 5) "at path" <|
+            [ fuzz (searchFuzzer 5 5) "at root" <|
+                \{ breadth, depth } ->
+                    makeTree breadth depth
+                        |> Tree.updateValueAt [] (always -1)
+                        |> Tree.get []
+                        |> Maybe.map Tree.value
+                        |> Expect.equal (Just -1)
+            , fuzz (searchFuzzer 5 5) "at path" <|
                 \{ breadth, depth, path } ->
                     makeTree breadth depth
                         |> Tree.updateValueAt path (always -1)
@@ -113,7 +154,7 @@ suite =
                             (always -1)
                         |> Expect.equal (makeTree breadth depth)
             ]
-        , describe "set"
+        , describe "replace at"
             [ fuzz (searchFuzzer 5 5) "at path" <|
                 \{ breadth, depth, path } ->
                     makeTree breadth depth
