@@ -3,7 +3,7 @@
     "name": "maca/elm-rose-tree",
     "summary": "Simple tree with path access, and updates and fold an map functions",
     "license": "BSD-3-Clause",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "exposed-modules": [
         "RoseTree.Tree",
         "RoseTree.Path"
